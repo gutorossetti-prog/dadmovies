@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Bananal em plantio</title>
+  <desc id="desc">Fileiras de bananeiras carregadas de cachos amarelos, vistas em perspectiva por uma estrada de terra.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#bfe0ff"/>
+      <stop offset=".58" stop-color="#f6e1a6"/>
+      <stop offset="1" stop-color="#f2b45c"/>
+    </linearGradient>
+    <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#71894a"/>
+      <stop offset="1" stop-color="#294b2c"/>
+    </linearGradient>
+    <linearGradient id="path" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d8b172"/>
+      <stop offset="1" stop-color="#8b5c35"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#132515" flood-opacity=".22"/>
+    </filter>
+    <g id="leafCluster">
+      <ellipse cx="0" cy="0" rx="96" ry="28" fill="#447a37" transform="rotate(-28)"/>
+      <ellipse cx="14" cy="-8" rx="92" ry="25" fill="#5b913f" transform="rotate(18)"/>
+      <ellipse cx="-18" cy="-18" rx="84" ry="24" fill="#315f32" transform="rotate(55)"/>
+      <ellipse cx="20" cy="-22" rx="86" ry="23" fill="#6aa349" transform="rotate(-62)"/>
+    </g>
+    <g id="bananaBunch">
+      <path d="M-35 0c9 18 18 30 29 39 7 6 19 5 25-3 4-6 3-13-3-18C7 11 2 3-1-6z" fill="#f5cf38"/>
+      <path d="M-15-6c8 17 17 28 27 36 8 6 19 4 24-4 4-6 2-13-4-18C24 2 19-5 16-13z" fill="#ffd94d"/>
+      <path d="M7-10c7 16 15 26 24 33 8 6 19 4 24-4 4-7 1-13-5-18C42-5 38-10 35-17z" fill="#e9bd27"/>
+      <path d="M-5-17c0-10 8-18 18-18h8" stroke="#5c5121" stroke-width="7" stroke-linecap="round" fill="none"/>
+    </g>
+    <g id="tree">
+      <path d="M0 160C-13 111-11 62 0 0c17 51 20 106 6 160z" fill="#77633a"/>
+      <use href="#leafCluster" transform="translate(5 -3)"/>
+      <use href="#bananaBunch" transform="translate(30 65) scale(.75)"/>
+    </g>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#sky)"/>
+  <circle cx="1320" cy="170" r="75" fill="#fff5bf" opacity=".9"/>
+  <path d="M0 420C220 360 350 385 505 348s307-14 438 25 291 29 657-16v543H0z" fill="#78965a" opacity=".72"/>
+  <path d="M0 485h1600v415H0z" fill="url(#ground)"/>
+
+  <path d="M725 900 792 465h20l70 435z" fill="url(#path)"/>
+  <path d="M610 900 777 465h14L710 900z" fill="#44663a" opacity=".65"/>
+  <path d="M990 900 824 465h14l252 435z" fill="#416039" opacity=".62"/>
+
+  <g filter="url(#shadow)">
+    <use href="#tree" transform="translate(95 395) scale(1.9)"/>
+    <use href="#tree" transform="translate(300 405) scale(1.55)"/>
+    <use href="#tree" transform="translate(470 420) scale(1.28)"/>
+    <use href="#tree" transform="translate(600 435) scale(1.02)"/>
+    <use href="#tree" transform="translate(690 446) scale(.82)"/>
+
+    <use href="#tree" transform="translate(1505 395) scale(-1.9 1.9)"/>
+    <use href="#tree" transform="translate(1300 405) scale(-1.55 1.55)"/>
+    <use href="#tree" transform="translate(1130 420) scale(-1.28 1.28)"/>
+    <use href="#tree" transform="translate(1000 435) scale(-1.02 1.02)"/>
+    <use href="#tree" transform="translate(910 446) scale(-.82 .82)"/>
+  </g>
+
+  <g opacity=".98">
+    <use href="#bananaBunch" transform="translate(160 580) scale(1.35)"/>
+    <use href="#bananaBunch" transform="translate(340 585) scale(1.1)"/>
+    <use href="#bananaBunch" transform="translate(1265 585) scale(-1.1 1.1)"/>
+    <use href="#bananaBunch" transform="translate(1440 580) scale(-1.35 1.35)"/>
+  </g>
+
+  <g>
+    <rect x="90" y="705" width="230" height="98" rx="12" fill="#7a5132"/>
+    <path d="M115 718h180M115 748h180M115 778h180" stroke="#a97a50" stroke-width="12"/>
+    <use href="#bananaBunch" transform="translate(145 694) scale(1.15)"/>
+    <use href="#bananaBunch" transform="translate(225 700) scale(1.05)"/>
+
+    <rect x="1280" y="710" width="235" height="100" rx="12" fill="#765031"/>
+    <path d="M1305 723h185M1305 753h185M1305 783h185" stroke="#a97a50" stroke-width="12"/>
+    <use href="#bananaBunch" transform="translate(1350 700) scale(1.1)"/>
+    <use href="#bananaBunch" transform="translate(1430 705) scale(1.05)"/>
+  </g>
+
+  <g transform="translate(1115 725)">
+    <ellipse cx="0" cy="65" rx="92" ry="22" fill="#1a291d" opacity=".25"/>
+    <path d="M-85 5h145l-28 70H-55z" fill="#6f6d5c"/>
+    <circle cx="-55" cy="84" r="28" fill="#27322a"/>
+    <path d="M60 20 128 78M70 8 140 50" stroke="#5b4a37" stroke-width="12" stroke-linecap="round"/>
+    <use href="#bananaBunch" transform="translate(-25 0) scale(.85)"/>
+    <use href="#bananaBunch" transform="translate(20 3) scale(.8)"/>
+  </g>
+
+  <g opacity=".18" fill="#16321e">
+    <ellipse cx="798" cy="550" rx="225" ry="24"/>
+    <ellipse cx="800" cy="650" rx="330" ry="31"/>
+    <ellipse cx="800" cy="805" rx="510" ry="40"/>
+  </g>
+</svg>
