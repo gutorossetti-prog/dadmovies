@@ -45,10 +45,6 @@ function normalize(value) {
     .trim();
 }
 
-function candidateTitle(result) {
-  return result.title || result.name || result.original_title || result.original_name || "";
-}
-
 function candidateYear(result) {
   const d = result.release_date || result.first_air_date || "";
   const y = Number(String(d).slice(0, 4));
@@ -90,7 +86,12 @@ async function matchTmdb(title, year, token, overrides) {
   }
 
   const q = encodeURIComponent(title);
-  const multi = await tmdbFetch(`/search/multi?query=${q}&include_adult=false&language=pt-BR`, token);
+
+  // The Sheet/Letterboxd titles are predominantly international English titles.
+  // Search in en-US so translated titles such as "Howl's Moving Castle" and
+  // "City of God" are present in the returned title fields used by our scorer.
+  // Display metadata (genres/details) remains localized separately in pt-BR.
+  const multi = await tmdbFetch(`/search/multi?query=${q}&include_adult=false&language=en-US`, token);
   const candidates = (multi.results || [])
     .filter((x) => x.media_type === "movie" || x.media_type === "tv")
     .slice(0, 12)
@@ -103,8 +104,8 @@ async function matchTmdb(title, year, token, overrides) {
   const movieYear = year ? `&primary_release_year=${year}` : "";
   const tvYear = year ? `&first_air_date_year=${year}` : "";
   const [movie, tv] = await Promise.all([
-    tmdbFetch(`/search/movie?query=${q}&include_adult=false&language=pt-BR&region=BR${movieYear}`, token),
-    tmdbFetch(`/search/tv?query=${q}&include_adult=false&language=pt-BR${tvYear}`, token),
+    tmdbFetch(`/search/movie?query=${q}&include_adult=false&language=en-US${movieYear}`, token),
+    tmdbFetch(`/search/tv?query=${q}&include_adult=false&language=en-US${tvYear}`, token),
   ]);
 
   const strict = [
