@@ -41,10 +41,11 @@ The sync searches both movie and TV endpoints using title + year. For an ambiguo
 Then rerun `npm run sync:catalog`.
 
 ## Vercel
-1. Push this project to a new GitHub repository.
-2. Import the repository into Vercel.
-3. Add `GOOGLE_SHEET_CSV_URL` and `TMDB_READ_ACCESS_TOKEN` in Vercel Environment Variables.
-4. Deploy. `prebuild` automatically refreshes the catalog.
+1. Connect `gutorossetti-prog/dadmovies` to the Vercel project.
+2. Add `GOOGLE_SHEET_CSV_URL` and `TMDB_READ_ACCESS_TOKEN` in Vercel Environment Variables.
+3. Deploy. `prebuild` automatically refreshes the catalog.
+
+Git integration verified by deployment-trigger commit on 2026-09-06.
 
 ## Product rules
 See `SPEC.md`.
