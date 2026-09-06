@@ -7,8 +7,19 @@ import type { Movie, PersonalState, StreamingService } from "@/lib/types";
 
 const SERVICES: Array<"Todos" | StreamingService> = ["Todos", "Netflix", "HBO Max", "Disney+", "Prime Video"];
 const PERSONAL_STATE_STORAGE_KEY = "dadmovies.personal-state.v1";
+const PREFERRED_SHELF_GENRES = [
+  "Ação",
+  "Comédia",
+  "Ficção científica",
+  "Drama",
+  "Thriller",
+  "Animação",
+  "Crime",
+  "Aventura",
+];
 
 type SortMode = "meta" | "users" | "year" | "title";
+type ShelfSortMode = "meta" | "year" | "random";
 type StateFilter = PersonalState | "all";
 type CatalogMode = "movies" | "series";
 
@@ -41,6 +52,8 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortMode>("meta");
   const [shuffleSeed, setShuffleSeed] = useState<number | null>(null);
+  const [shelfSort, setShelfSort] = useState<ShelfSortMode>("meta");
+  const [shelfSeed, setShelfSeed] = useState(() => Date.now() >>> 0);
   const [onlyAvailable, setOnlyAvailable] = useState(true);
   const [stateFilter, setStateFilter] = useState<StateFilter>("watch");
   const [personalStates, setPersonalStates] = useState<Record<string, PersonalState>>({});
@@ -137,6 +150,41 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
       .slice(0, 10);
   }, [movies, personalStates]);
 
+  const genreShelves = useMemo(() => {
+    const active = movies.filter(
+      (movie) => (personalStates[movie.key] ?? "watch") === "watch" && movie.services.length > 0,
+    );
+    const counts = new Map<string, number>();
+    for (const movie of active) {
+      for (const movieGenre of movie.genres) {
+        counts.set(movieGenre, (counts.get(movieGenre) ?? 0) + 1);
+      }
+    }
+
+    const preferred = PREFERRED_SHELF_GENRES.filter((item) => (counts.get(item) ?? 0) >= 4);
+    const preferredSet = new Set(preferred);
+    const remaining = Array.from(counts.entries())
+      .filter(([item, count]) => count >= 4 && !preferredSet.has(item))
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "pt-BR"))
+      .map(([item]) => item);
+
+    return [...preferred, ...remaining].slice(0, 8).map((movieGenre) => {
+      const rows = active.filter((movie) => movie.genres.includes(movieGenre)).slice();
+      rows.sort((a, b) => {
+        if (shelfSort === "random") {
+          const aRank = randomRank(`${movieGenre}:${a.key}`, shelfSeed);
+          const bRank = randomRank(`${movieGenre}:${b.key}`, shelfSeed);
+          return aRank - bRank || a.key.localeCompare(b.key);
+        }
+        if (shelfSort === "year") {
+          return (b.year ?? 0) - (a.year ?? 0) || (b.metascore ?? -1) - (a.metascore ?? -1);
+        }
+        return (b.metascore ?? -1) - (a.metascore ?? -1) || (b.userScore ?? -1) - (a.userScore ?? -1);
+      });
+      return { genre: movieGenre, count: rows.length, movies: rows.slice(0, 24) };
+    });
+  }, [movies, personalStates, shelfSort, shelfSeed]);
+
   const randomMovies = useMemo(() => {
     const byKey = new Map(movies.map((m) => [m.key, m]));
     return randomKeys.map((key) => byKey.get(key)).filter(Boolean) as Movie[];
@@ -152,6 +200,10 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
 
   function shuffleCatalog() {
     setShuffleSeed((Date.now() ^ Math.floor(Math.random() * 0x7fffffff)) >>> 0);
+  }
+
+  function reshuffleShelves() {
+    setShelfSeed((Date.now() ^ Math.floor(Math.random() * 0x7fffffff)) >>> 0);
   }
 
   return (
@@ -181,7 +233,7 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
       {catalogMode === "series" ? (
         <section className="seriesPlaceholder" aria-labelledby="series-placeholder-title">
           <div className="seriesPlaceholderImage">
-            <img src="/series-banana-placeholder.svg" alt="Bananal em plantação ao pôr do sol" />
+            <img src="/series-banana-plantation.svg" alt="Fileiras de um bananal em plantio, carregadas de bananas" />
           </div>
           <div className="seriesPlaceholderCopy">
             <span className="eyebrow">SÉRIES · EM BREVE</span>
@@ -234,6 +286,53 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
               {topRated.map((movie) => <MovieCard movie={movie} compact key={movie.key} onSelect={setSelectedMovie} />)}
             </div>
           </section>
+
+          {genreShelves.length > 0 && (
+            <section className="section genreShelvesSection">
+              <div className="sectionHeading genreShelvesHeading">
+                <div>
+                  <span className="eyebrow">DESCOBRIR</span>
+                  <h2>Explorar por gênero</h2>
+                </div>
+                <div className="genreShelfControls">
+                  <label>
+                    <span>Ordenar linhas</span>
+                    <select
+                      value={shelfSort}
+                      onChange={(event) => {
+                        const next = event.target.value as ShelfSortMode;
+                        setShelfSort(next);
+                        if (next === "random") reshuffleShelves();
+                      }}
+                    >
+                      <option value="meta">Nota</option>
+                      <option value="year">Mais recentes</option>
+                      <option value="random">Aleatório</option>
+                    </select>
+                  </label>
+                  {shelfSort === "random" && (
+                    <button type="button" className="textButton" onClick={reshuffleShelves}>↻ Nova ordem</button>
+                  )}
+                </div>
+              </div>
+
+              <div className="genreShelfStack">
+                {genreShelves.map((shelf) => (
+                  <section className="genreShelfGroup" key={shelf.genre} aria-labelledby={`genre-${shelf.genre}`}>
+                    <div className="genreShelfHeader">
+                      <h3 id={`genre-${shelf.genre}`}>{shelf.genre}</h3>
+                      <span>{shelf.count} filmes · deslize →</span>
+                    </div>
+                    <div className="genreShelfTrack">
+                      {shelf.movies.map((movie) => (
+                        <MovieCard movie={movie} compact key={`${shelf.genre}-${movie.key}`} onSelect={setSelectedMovie} />
+                      ))}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            </section>
+          )}
 
           <section className="section catalogSection">
             <div className="sectionHeading">
