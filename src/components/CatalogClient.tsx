@@ -20,12 +20,25 @@ function shuffle<T>(input: T[]): T[] {
   return a;
 }
 
+function randomRank(key: string, seed: number): number {
+  let hash = (2166136261 ^ seed) >>> 0;
+  for (let i = 0; i < key.length; i++) {
+    hash ^= key.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  hash ^= hash >>> 16;
+  hash = Math.imul(hash, 2246822507);
+  hash ^= hash >>> 13;
+  return hash >>> 0;
+}
+
 export function CatalogClient({ movies }: { movies: Movie[] }) {
   const [service, setService] = useState<(typeof SERVICES)[number]>("Todos");
   const [genre, setGenre] = useState("Todos");
   const [language, setLanguage] = useState("Todos");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortMode>("meta");
+  const [shuffleSeed, setShuffleSeed] = useState<number | null>(null);
   const [onlyAvailable, setOnlyAvailable] = useState(true);
   const [stateFilter, setStateFilter] = useState<StateFilter>("watch");
   const [personalStates, setPersonalStates] = useState<Record<string, PersonalState>>({});
@@ -104,12 +117,16 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
       .slice();
 
     return rows.sort((a, b) => {
+      if (shuffleSeed !== null) {
+        const rankDiff = randomRank(a.key, shuffleSeed) - randomRank(b.key, shuffleSeed);
+        return rankDiff || a.key.localeCompare(b.key);
+      }
       if (sort === "users") return (b.userScore ?? -1) - (a.userScore ?? -1);
       if (sort === "year") return (b.year ?? 0) - (a.year ?? 0);
       if (sort === "title") return a.title.localeCompare(b.title, "pt-BR");
       return (b.metascore ?? -1) - (a.metascore ?? -1);
     });
-  }, [baseFiltered, personalStates, stateFilter, sort]);
+  }, [baseFiltered, personalStates, stateFilter, sort, shuffleSeed]);
 
   const topRated = useMemo(() => {
     return movies
@@ -129,6 +146,10 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
     );
     setRandomKeys(shuffle(candidates).slice(0, 3).map((movie) => movie.key));
     window.setTimeout(() => document.getElementById("sorteio")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+  }
+
+  function shuffleCatalog() {
+    setShuffleSeed((Date.now() ^ Math.floor(Math.random() * 0x7fffffff)) >>> 0);
   }
 
   return (
@@ -224,7 +245,13 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
             </label>
             <label>
               <span>Ordenar</span>
-              <select value={sort} onChange={(e) => setSort(e.target.value as SortMode)}>
+              <select
+                value={sort}
+                onChange={(e) => {
+                  setSort(e.target.value as SortMode);
+                  setShuffleSeed(null);
+                }}
+              >
                 <option value="meta">Metascore</option>
                 <option value="users">Nota dos usuários</option>
                 <option value="year">Mais recentes</option>
@@ -236,6 +263,10 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
               <span>Só disponíveis nos 4 serviços</span>
             </label>
           </div>
+
+          <button type="button" className="textButton" onClick={shuffleCatalog} aria-pressed={shuffleSeed !== null}>
+            {shuffleSeed === null ? "↻ Embaralhar catálogo" : "↻ Embaralhar de novo"}
+          </button>
         </div>
 
         <div className="catalogGrid">

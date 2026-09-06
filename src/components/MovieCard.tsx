@@ -3,20 +3,19 @@
 import Image from "next/image";
 import type { Movie, StreamingService } from "@/lib/types";
 
-function Score({ label, value, scale = 100 }: { label: string; value: number | null; scale?: number }) {
-  return (
-    <div className="score">
-      <span className="scoreValue">{value === null ? "—" : scale === 10 ? value.toFixed(1) : Math.round(value)}</span>
-      <span className="scoreLabel">{label}</span>
-    </div>
-  );
-}
-
 function serviceClass(service: StreamingService) {
   if (service === "Netflix") return "service-netflix";
   if (service === "Prime Video") return "service-prime";
   if (service === "HBO Max") return "service-hbo";
   return "service-disney";
+}
+
+function metaScore(value: number | null) {
+  return value === null ? "—" : Math.round(value).toString();
+}
+
+function userScore(value: number | null) {
+  return value === null ? "—" : value.toFixed(1);
 }
 
 export function MovieCard({ movie, compact = false, onSelect }: { movie: Movie; compact?: boolean; onSelect?: (movie: Movie) => void }) {
@@ -55,10 +54,6 @@ export function MovieCard({ movie, compact = false, onSelect }: { movie: Movie; 
             <span>{movie.title}</span>
           </div>
         )}
-        <div className="posterScores">
-          <Score label="Meta" value={movie.metascore} />
-          <Score label="Users" value={movie.userScore} scale={10} />
-        </div>
       </div>
 
       <div className="movieInfo">
@@ -71,7 +66,9 @@ export function MovieCard({ movie, compact = false, onSelect }: { movie: Movie; 
           <p className="genres">{movie.genres.slice(0, 3).join(" · ")}</p>
         )}
 
-        <div className="services" aria-label="Onde assistir">
+        <div className="services" aria-label="Notas e onde assistir">
+          <span className="serviceBadge">Meta {metaScore(movie.metascore)}</span>
+          <span className="serviceBadge">Users {userScore(movie.userScore)}</span>
           {movie.services.length ? (
             movie.services.map((service) => (
               <span className={`serviceBadge ${serviceClass(service)}`} key={service}>{service}</span>
