@@ -20,6 +20,14 @@ function serviceClass(service: StreamingService) {
   return "service-disney";
 }
 
+function serviceSearchUrl(service: StreamingService, title: string) {
+  const query = encodeURIComponent(title);
+  if (service === "Netflix") return `https://www.netflix.com/search?q=${query}`;
+  if (service === "Prime Video") return `https://www.primevideo.com/search?phrase=${query}`;
+  if (service === "HBO Max") return `https://play.max.com/search?q=${query}`;
+  return `https://www.disneyplus.com/search?q=${query}`;
+}
+
 function stateLabel(state: PersonalState) {
   if (state === "seen") return "Visto";
   if (state === "dismissed") return "Não quero ver";
@@ -171,7 +179,18 @@ export function MovieDetailModal({
 
           <div className="services modalServices" aria-label="Onde assistir">
             {movie.services.length ? movie.services.map((service) => (
-              <span className={`serviceBadge ${serviceClass(service)}`} key={service}>{service}</span>
+              <a
+                className={`serviceBadge ${serviceClass(service)}`}
+                href={serviceSearchUrl(service, movie.title)}
+                target="_blank"
+                rel="noreferrer"
+                key={service}
+                aria-label={`Buscar ${movie.title} no ${service}`}
+                title={`Buscar ${movie.title} no ${service}`}
+                style={{ textDecoration: "none" }}
+              >
+                {service} ↗
+              </a>
             )) : <span className="serviceBadge muted">Fora dos 4 serviços</span>}
           </div>
 
