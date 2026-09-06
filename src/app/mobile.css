@@ -1,0 +1,201 @@
+/* Mobile-first refinements layered after globals.css. */
+.mobileSwipeHint { display: none; }
+.sectionHeadingActions { display: flex; align-items: center; gap: 10px; }
+
+@media (max-width: 700px) {
+  html { scroll-padding-top: 8px; }
+  body { overflow-x: hidden; }
+  main { padding: 0 14px max(36px, env(safe-area-inset-bottom)); }
+
+  .hero {
+    min-height: auto;
+    gap: 26px;
+    padding: 42px 0 34px;
+  }
+  .hero h1 {
+    margin-top: 8px;
+    font-size: clamp(2.65rem, 13.5vw, 4.2rem);
+    line-height: .94;
+    letter-spacing: -.055em;
+  }
+  .hero p { max-width: 31rem; line-height: 1.45; }
+  .primaryButton {
+    width: 100%;
+    min-height: 52px;
+    padding: 15px 20px;
+    touch-action: manipulation;
+  }
+
+  .section { padding-top: 44px; }
+  .spotlight { padding-top: 36px; }
+  .sectionHeading {
+    align-items: flex-end;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .sectionHeading h2 {
+    margin-top: 4px;
+    font-size: clamp(1.85rem, 9.5vw, 2.55rem);
+    line-height: 1;
+  }
+  .sectionHeadingActions { flex: 0 0 auto; align-items: flex-end; }
+  .mobileSwipeHint {
+    display: inline-block;
+    color: var(--muted);
+    font-size: .7rem;
+    white-space: nowrap;
+  }
+  .sectionNote { display: none; }
+  .catalogCount { display: inline-block; font-size: .72rem; }
+  .textButton {
+    min-height: 42px;
+    padding: 10px 13px;
+    touch-action: manipulation;
+  }
+
+  /* Discovery shelves: horizontal, tactile and snap to each poster. */
+  .mobileShelf {
+    display: flex;
+    grid-template-columns: none;
+    gap: 12px;
+    margin-inline: -14px;
+    padding: 2px 14px 10px;
+    overflow-x: auto;
+    overflow-y: visible;
+    overscroll-behavior-inline: contain;
+    scroll-padding-inline: 14px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .mobileShelf::-webkit-scrollbar { display: none; }
+  .mobileShelf .movieCard {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    scroll-snap-stop: normal;
+  }
+  .mobileShelfFeatured .movieCard { width: min(76vw, 310px); }
+  .mobileShelfTop .movieCard { width: min(42vw, 176px); }
+  .mobileShelfFeatured .movieInfo { display: block; }
+  .mobileShelfFeatured .titleRow h3 { font-size: 1.04rem; }
+  .mobileShelfFeatured .genres { font-size: .75rem; }
+
+  /* Dense browsing stays vertical: two posters per row. */
+  .catalogGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px 10px;
+  }
+  .catalogGrid .titleRow { gap: 5px; }
+  .catalogGrid .titleRow h3 {
+    font-size: .91rem;
+    line-height: 1.18;
+  }
+  .catalogGrid .year { font-size: .72rem; }
+  .catalogGrid .genres { font-size: .69rem; }
+  .catalogGrid .services { gap: 4px; margin-top: 7px; }
+  .catalogGrid .serviceBadge { padding: 4px 6px; font-size: .58rem; }
+  .posterWrap { border-radius: 13px; }
+  .posterScores { top: 6px; left: 6px; gap: 4px; }
+  .score { min-width: 40px; padding: 5px 5px 4px; border-radius: 8px; }
+  .scoreValue { font-size: .79rem; }
+  .scoreLabel { font-size: .45rem; }
+
+  /* Filters remain fully available but use phone space efficiently. */
+  .filters {
+    gap: 12px;
+    padding: 12px;
+    margin-bottom: 24px;
+    border-radius: 16px;
+  }
+  .searchBox input {
+    min-height: 46px;
+    padding: 12px 13px;
+    font-size: 16px; /* prevents iOS input zoom */
+  }
+  .filterRow {
+    gap: 7px;
+    margin-inline: -12px;
+    padding: 0 12px 4px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .filterRow::-webkit-scrollbar { display: none; }
+  .filterRow button {
+    min-height: 40px;
+    padding: 9px 12px;
+    touch-action: manipulation;
+  }
+  .selectRow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+  }
+  .selectRow label:not(.toggleLabel) { width: 100%; min-width: 0; }
+  .selectRow label:not(.toggleLabel) > span { font-size: .68rem; }
+  select {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    padding: 9px 8px;
+    font-size: .82rem;
+  }
+  .toggleLabel {
+    grid-column: 1 / -1;
+    min-height: 42px;
+    font-size: .76rem;
+  }
+  .toggleLabel input { width: 19px; height: 19px; }
+
+  /* Bottom-sheet details tuned for thumb use and modern mobile viewports. */
+  .modalBackdrop {
+    padding: 0;
+    align-items: end;
+  }
+  .movieModal {
+    grid-template-columns: 104px minmax(0, 1fr);
+    gap: 14px;
+    width: 100%;
+    max-height: 92dvh;
+    padding: 16px 16px max(20px, env(safe-area-inset-bottom));
+    border-radius: 22px 22px 0 0;
+    overscroll-behavior: contain;
+  }
+  .modalClose {
+    top: 12px;
+    right: 12px;
+    width: 44px;
+    height: 44px;
+    font-size: 1.55rem;
+    touch-action: manipulation;
+  }
+  .modalPosterWrap { position: relative; top: auto; border-radius: 11px; }
+  .modalBody { padding: 2px 0 16px; }
+  .modalBody h2 {
+    margin: 6px 42px 7px 0;
+    font-size: clamp(1.62rem, 8.3vw, 2.55rem);
+    line-height: .98;
+  }
+  .modalMetaLine { gap: 5px 10px; font-size: .72rem; }
+  .modalMetaLine span:not(:last-child)::after { margin-left: 10px; }
+  .modalServices { margin-top: 11px; }
+  .modalScores { gap: 7px; margin-top: 12px; }
+  .modalScores > div { min-width: 78px; padding: 8px 10px; }
+  .modalSection { margin-top: 22px; }
+  .modalSection > p { font-size: .94rem; line-height: 1.56; }
+  .movieModal .textButton { min-height: 44px; }
+  .creditGrid { grid-template-columns: 1fr; }
+  .creditItem { padding: 10px 11px; }
+}
+
+@media (max-width: 380px) {
+  .hero h1 { font-size: clamp(2.45rem, 13vw, 3.5rem); }
+  .mobileShelfFeatured .movieCard { width: 80vw; }
+  .mobileShelfTop .movieCard { width: 45vw; }
+  .selectRow { grid-template-columns: 1fr; }
+  .toggleLabel { grid-column: 1; }
+  .movieModal { grid-template-columns: 92px minmax(0, 1fr); gap: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobileShelf { scroll-behavior: auto; }
+}
