@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { MovieCard } from "@/components/MovieCard";
+import { MovieDetailModal } from "@/components/MovieDetailModal";
 import type { Movie, StreamingService } from "@/lib/types";
 
 const SERVICES: Array<"Todos" | StreamingService> = ["Todos", "Netflix", "HBO Max", "Disney+", "Prime Video"];
@@ -24,6 +25,7 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
   const [sort, setSort] = useState<SortMode>("meta");
   const [onlyAvailable, setOnlyAvailable] = useState(true);
   const [randomKeys, setRandomKeys] = useState<string[]>([]);
+  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
 
   const genres = useMemo(() => {
     const values = new Set<string>();
@@ -88,7 +90,7 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
             <button className="textButton" onClick={drawThree}>Sortear de novo</button>
           </div>
           <div className="featuredGrid">
-            {randomMovies.map((movie) => <MovieCard movie={movie} key={movie.key} />)}
+            {randomMovies.map((movie) => <MovieCard movie={movie} key={movie.key} onSelect={setSelectedMovie} />)}
           </div>
         </section>
       )}
@@ -102,7 +104,7 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
           <span className="sectionNote">Metascore · disponíveis agora</span>
         </div>
         <div className="topGrid">
-          {topRated.map((movie) => <MovieCard movie={movie} compact key={movie.key} />)}
+          {topRated.map((movie) => <MovieCard movie={movie} compact key={movie.key} onSelect={setSelectedMovie} />)}
         </div>
       </section>
 
@@ -151,11 +153,13 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
         </div>
 
         <div className="catalogGrid">
-          {filtered.map((movie) => <MovieCard movie={movie} key={movie.key} />)}
+          {filtered.map((movie) => <MovieCard movie={movie} key={movie.key} onSelect={setSelectedMovie} />)}
         </div>
 
         {filtered.length === 0 && <div className="emptyState">Nenhum filme corresponde a esses filtros.</div>}
       </section>
+
+      <MovieDetailModal movie={selectedMovie} onClose={() => setSelectedMovie(null)} />
     </>
   );
 }

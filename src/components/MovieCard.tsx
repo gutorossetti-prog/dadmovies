@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import type { Movie } from "@/lib/types";
+import type { Movie, StreamingService } from "@/lib/types";
 
 function Score({ label, value, scale = 100 }: { label: string; value: number | null; scale?: number }) {
   return (
@@ -12,9 +12,35 @@ function Score({ label, value, scale = 100 }: { label: string; value: number | n
   );
 }
 
-export function MovieCard({ movie, compact = false }: { movie: Movie; compact?: boolean }) {
+function serviceClass(service: StreamingService) {
+  if (service === "Netflix") return "service-netflix";
+  if (service === "Prime Video") return "service-prime";
+  if (service === "HBO Max") return "service-hbo";
+  return "service-disney";
+}
+
+export function MovieCard({ movie, compact = false, onSelect }: { movie: Movie; compact?: boolean; onSelect?: (movie: Movie) => void }) {
+  function openDetails() {
+    onSelect?.(movie);
+  }
+
+  function onKeyDown(event: React.KeyboardEvent<HTMLElement>) {
+    if (!onSelect) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      openDetails();
+    }
+  }
+
   return (
-    <article className={`movieCard ${compact ? "compact" : ""}`}>
+    <article
+      className={`movieCard ${compact ? "compact" : ""}`}
+      onClick={onSelect ? openDetails : undefined}
+      onKeyDown={onKeyDown}
+      role={onSelect ? "button" : undefined}
+      tabIndex={onSelect ? 0 : undefined}
+      aria-label={onSelect ? `Ver detalhes de ${movie.title}` : undefined}
+    >
       <div className="posterWrap">
         {movie.posterUrl ? (
           <Image
@@ -48,7 +74,7 @@ export function MovieCard({ movie, compact = false }: { movie: Movie; compact?: 
         <div className="services" aria-label="Onde assistir">
           {movie.services.length ? (
             movie.services.map((service) => (
-              <span className="serviceBadge" key={service}>{service}</span>
+              <span className={`serviceBadge ${serviceClass(service)}`} key={service}>{service}</span>
             ))
           ) : (
             <span className="serviceBadge muted">Fora dos 4 serviços</span>
