@@ -52,7 +52,7 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortMode>("meta");
   const [shuffleSeed, setShuffleSeed] = useState<number | null>(null);
-  const [shelfSort, setShelfSort] = useState<ShelfSortMode>("meta");
+  const [shelfSort, setShelfSort] = useState<ShelfSortMode>("random");
   const [shelfSeed, setShelfSeed] = useState(() => Date.now() >>> 0);
   const [onlyAvailable, setOnlyAvailable] = useState(true);
   const [stateFilter, setStateFilter] = useState<StateFilter>("watch");
@@ -248,7 +248,7 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
             <div>
               <span className="eyebrow">CATÁLOGO DO PAIZÃO</span>
               <h1>Escolha um bom filme.<br />Sem perder meia hora escolhendo.</h1>
-              <p>Uma estante visual com o que vale a pena ver e onde está disponível.</p>
+              <p>Uma estante visual com o que vale a pena ver e onde está disponível</p>
             </div>
             <button className="primaryButton" onClick={drawThree}>Sortear 3 filmes</button>
           </section>
@@ -271,22 +271,6 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
             </section>
           )}
 
-          <section className="section">
-            <div className="sectionHeading">
-              <div>
-                <span className="eyebrow">ATALHO</span>
-                <h2>Melhores avaliados</h2>
-              </div>
-              <div className="sectionHeadingActions">
-                <span className="mobileSwipeHint" aria-hidden="true">Deslize →</span>
-                <span className="sectionNote">Metascore · disponíveis agora · ainda quero ver</span>
-              </div>
-            </div>
-            <div className="topGrid mobileShelf mobileShelfTop">
-              {topRated.map((movie) => <MovieCard movie={movie} compact key={movie.key} onSelect={setSelectedMovie} />)}
-            </div>
-          </section>
-
           {genreShelves.length > 0 && (
             <section className="section genreShelvesSection">
               <div className="sectionHeading genreShelvesHeading">
@@ -305,9 +289,9 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
                         if (next === "random") reshuffleShelves();
                       }}
                     >
+                      <option value="random">Aleatório</option>
                       <option value="meta">Nota</option>
                       <option value="year">Mais recentes</option>
-                      <option value="random">Aleatório</option>
                     </select>
                   </label>
                   {shelfSort === "random" && (
@@ -333,6 +317,22 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
               </div>
             </section>
           )}
+
+          <section className="section">
+            <div className="sectionHeading">
+              <div>
+                <span className="eyebrow">ATALHO</span>
+                <h2>Melhores avaliados</h2>
+              </div>
+              <div className="sectionHeadingActions">
+                <span className="mobileSwipeHint" aria-hidden="true">Deslize →</span>
+                <span className="sectionNote">Metascore · disponíveis agora · ainda quero ver</span>
+              </div>
+            </div>
+            <div className="topGrid mobileShelf mobileShelfTop">
+              {topRated.map((movie) => <MovieCard movie={movie} compact key={movie.key} onSelect={setSelectedMovie} />)}
+            </div>
+          </section>
 
           <section className="section catalogSection">
             <div className="sectionHeading">
