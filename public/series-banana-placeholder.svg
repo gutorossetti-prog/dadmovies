@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Bananal em plantação</title>
+  <desc id="desc">Uma plantação de bananas cinematográfica ao pôr do sol, placeholder espirituoso para a seção de séries.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f6d995"/><stop offset=".52" stop-color="#dba45e"/><stop offset="1" stop-color="#5a6a35"/></linearGradient>
+    <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#446d2f"/><stop offset="1" stop-color="#17351f"/></linearGradient>
+    <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#5f7437"/><stop offset="1" stop-color="#182c1d"/></linearGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="10" stdDeviation="16" flood-opacity=".28"/></filter>
+  </defs>
+  <rect width="1600" height="900" fill="url(#sky)"/>
+  <circle cx="1270" cy="230" r="92" fill="#ffe8a8" opacity=".9"/>
+  <path d="M0 560 C250 430 420 510 640 455 S990 420 1160 475 S1400 430 1600 500 V900 H0Z" fill="url(#ground)"/>
+  <path d="M0 650 C300 540 520 610 800 560 S1300 530 1600 590 V900 H0Z" fill="#263f25" opacity=".92"/>
+  <g opacity=".95">
+    <path d="M110 0 C230 160 220 380 170 650" stroke="#294426" stroke-width="42" fill="none"/>
+    <path d="M210 45 C320 95 390 165 450 260 C340 250 250 220 155 135Z" fill="url(#leaf)"/>
+    <path d="M135 145 C40 190 10 300 0 415 C98 358 165 292 205 190Z" fill="url(#leaf)"/>
+    <path d="M1460 0 C1365 210 1390 430 1455 690" stroke="#294426" stroke-width="44" fill="none"/>
+    <path d="M1388 80 C1260 90 1180 145 1095 235 C1215 252 1335 220 1430 150Z" fill="url(#leaf)"/>
+    <path d="M1472 150 C1575 205 1605 300 1600 420 C1505 360 1440 290 1412 190Z" fill="url(#leaf)"/>
+  </g>
+  <g fill="#668b38" stroke="#314e25" stroke-width="5" filter="url(#shadow)">
+    <path d="M240 245 C330 205 385 255 390 360 C330 420 270 420 220 365 C205 320 210 280 240 245Z"/>
+    <path d="M1325 300 C1410 260 1475 305 1480 405 C1420 465 1350 455 1305 400 C1290 350 1295 320 1325 300Z"/>
+  </g>
+  <g fill="#8eae45">
+    <ellipse cx="275" cy="310" rx="26" ry="63" transform="rotate(-15 275 310)"/><ellipse cx="320" cy="300" rx="25" ry="66" transform="rotate(5 320 300)"/><ellipse cx="352" cy="325" rx="24" ry="61" transform="rotate(17 352 325)"/>
+    <ellipse cx="1360" cy="360" rx="25" ry="64" transform="rotate(-14 1360 360)"/><ellipse cx="1405" cy="348" rx="26" ry="68" transform="rotate(6 1405 348)"/><ellipse cx="1440" cy="372" rx="24" ry="62" transform="rotate(17 1440 372)"/>
+  </g>
+  <g opacity=".68" fill="#48672f">
+    <path d="M355 900 L475 505 L515 900Z"/><path d="M555 900 L650 480 L690 900Z"/><path d="M935 900 L885 475 L830 900Z"/><path d="M1140 900 L1040 510 L990 900Z"/>
+  </g>
+  <path d="M725 900 L778 565 L824 565 L880 900Z" fill="#8f7045" opacity=".95"/>
+  <g text-anchor="middle" fill="#172118" font-family="Georgia, 'Times New Roman', serif">
+    <text x="800" y="235" font-size="106" font-weight="700" letter-spacing="2">BANANAL</text>
+    <text x="800" y="340" font-size="90" font-weight="700" letter-spacing="2">EM PLANTAÇÃO</text>
+    <text x="800" y="410" font-size="30" font-style="italic">A seção de séries ainda está em cultivo.</text>
+  </g>
+  <g transform="translate(650 455)" fill="#1a2819"><path d="M62 15 C105 20 140 45 146 84 C112 98 77 91 57 71 C40 54 37 33 42 20Z"/><path d="M61 19 C73 55 99 70 139 80" fill="none" stroke="#d4b24a" stroke-width="8" stroke-linecap="round"/></g>
+  <g transform="translate(120 625) rotate(-4)" filter="url(#shadow)">
+    <rect width="330" height="165" rx="16" fill="#5d4028" stroke="#8b6645" stroke-width="6"/>
+    <text x="165" y="58" text-anchor="middle" fill="#f2dfb0" font-family="system-ui, sans-serif" font-weight="800" font-size="30">BOAS SÉRIES</text>
+    <text x="165" y="98" text-anchor="middle" fill="#f2dfb0" font-family="system-ui, sans-serif" font-weight="800" font-size="30">GERAM GRANDES</text>
+    <text x="165" y="138" text-anchor="middle" fill="#f2dfb0" font-family="system-ui, sans-serif" font-weight="800" font-size="30">COLHEITAS</text>
+  </g>
+  <g transform="translate(1160 620)" filter="url(#shadow)">
+    <rect width="265" height="105" rx="12" fill="#111816" opacity=".9"/>
+    <text x="132" y="45" text-anchor="middle" fill="#f3ead6" font-family="system-ui, sans-serif" font-weight="800" font-size="24">DRAMA · COMÉDIA</text>
+    <text x="132" y="78" text-anchor="middle" fill="#b9c3aa" font-family="system-ui, sans-serif" font-size="20">EM BREVE NA COLHEITA</text>
+  </g>
+</svg>

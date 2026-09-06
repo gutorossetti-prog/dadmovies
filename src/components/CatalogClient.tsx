@@ -10,6 +10,7 @@ const PERSONAL_STATE_STORAGE_KEY = "dadmovies.personal-state.v1";
 
 type SortMode = "meta" | "users" | "year" | "title";
 type StateFilter = PersonalState | "all";
+type CatalogMode = "movies" | "series";
 
 function shuffle<T>(input: T[]): T[] {
   const a = [...input];
@@ -33,6 +34,7 @@ function randomRank(key: string, seed: number): number {
 }
 
 export function CatalogClient({ movies }: { movies: Movie[] }) {
+  const [catalogMode, setCatalogMode] = useState<CatalogMode>("movies");
   const [service, setService] = useState<(typeof SERVICES)[number]>("Todos");
   const [genre, setGenre] = useState("Todos");
   const [language, setLanguage] = useState("Todos");
@@ -154,134 +156,172 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
 
   return (
     <>
-      <section className="hero">
-        <div>
-          <span className="eyebrow">CATÁLOGO DO PAIZÃO</span>
-          <h1>Escolha um bom filme.<br />Sem perder meia hora escolhendo.</h1>
-          <p>Uma estante visual com o que vale a pena ver e onde está disponível.</p>
-        </div>
-        <button className="primaryButton" onClick={drawThree}>Sortear 3 filmes</button>
-      </section>
+      <nav className="catalogModeSwitch" aria-label="Tipo de catálogo">
+        <button
+          type="button"
+          className={catalogMode === "movies" ? "active" : ""}
+          onClick={() => setCatalogMode("movies")}
+          aria-pressed={catalogMode === "movies"}
+        >
+          Filmes
+        </button>
+        <button
+          type="button"
+          className={catalogMode === "series" ? "active" : ""}
+          onClick={() => {
+            setCatalogMode("series");
+            setSelectedMovie(null);
+          }}
+          aria-pressed={catalogMode === "series"}
+        >
+          Séries
+        </button>
+      </nav>
 
-      {randomMovies.length > 0 && (
-        <section id="sorteio" className="section spotlight">
-          <div className="sectionHeading">
-            <div>
-              <span className="eyebrow">PARA HOJE</span>
-              <h2>Três escolhas</h2>
-            </div>
-            <div className="sectionHeadingActions">
-              <span className="mobileSwipeHint" aria-hidden="true">Deslize →</span>
-              <button className="textButton" onClick={drawThree}>Sortear de novo</button>
-            </div>
+      {catalogMode === "series" ? (
+        <section className="seriesPlaceholder" aria-labelledby="series-placeholder-title">
+          <div className="seriesPlaceholderImage">
+            <img src="/series-banana-placeholder.svg" alt="Bananal em plantação ao pôr do sol" />
           </div>
-          <div className="featuredGrid mobileShelf mobileShelfFeatured">
-            {randomMovies.map((movie) => <MovieCard movie={movie} key={movie.key} onSelect={setSelectedMovie} />)}
+          <div className="seriesPlaceholderCopy">
+            <span className="eyebrow">SÉRIES · EM BREVE</span>
+            <h1 id="series-placeholder-title">Bananal em plantação.</h1>
+            <p>A watchlist do Trakt ainda vai chegar. Enquanto isso, boas séries seguem cultivando grandes expectativas.</p>
+            <button className="textButton" type="button" onClick={() => setCatalogMode("movies")}>Voltar aos filmes</button>
           </div>
         </section>
-      )}
+      ) : (
+        <>
+          <section className="hero">
+            <div>
+              <span className="eyebrow">CATÁLOGO DO PAIZÃO</span>
+              <h1>Escolha um bom filme.<br />Sem perder meia hora escolhendo.</h1>
+              <p>Uma estante visual com o que vale a pena ver e onde está disponível.</p>
+            </div>
+            <button className="primaryButton" onClick={drawThree}>Sortear 3 filmes</button>
+          </section>
 
-      <section className="section">
-        <div className="sectionHeading">
-          <div>
-            <span className="eyebrow">ATALHO</span>
-            <h2>Melhores avaliados</h2>
-          </div>
-          <div className="sectionHeadingActions">
-            <span className="mobileSwipeHint" aria-hidden="true">Deslize →</span>
-            <span className="sectionNote">Metascore · disponíveis agora · ainda quero ver</span>
-          </div>
-        </div>
-        <div className="topGrid mobileShelf mobileShelfTop">
-          {topRated.map((movie) => <MovieCard movie={movie} compact key={movie.key} onSelect={setSelectedMovie} />)}
-        </div>
-      </section>
+          {randomMovies.length > 0 && (
+            <section id="sorteio" className="section spotlight">
+              <div className="sectionHeading">
+                <div>
+                  <span className="eyebrow">PARA HOJE</span>
+                  <h2>Três escolhas</h2>
+                </div>
+                <div className="sectionHeadingActions">
+                  <span className="mobileSwipeHint" aria-hidden="true">Deslize →</span>
+                  <button className="textButton" onClick={drawThree}>Sortear de novo</button>
+                </div>
+              </div>
+              <div className="featuredGrid mobileShelf mobileShelfFeatured">
+                {randomMovies.map((movie) => <MovieCard movie={movie} key={movie.key} onSelect={setSelectedMovie} />)}
+              </div>
+            </section>
+          )}
 
-      <section className="section catalogSection">
-        <div className="sectionHeading">
-          <div>
-            <span className="eyebrow">ESTANTE</span>
-            <h2>Catálogo</h2>
-          </div>
-          <span className="sectionNote catalogCount">{filtered.length} títulos</span>
-        </div>
+          <section className="section">
+            <div className="sectionHeading">
+              <div>
+                <span className="eyebrow">ATALHO</span>
+                <h2>Melhores avaliados</h2>
+              </div>
+              <div className="sectionHeadingActions">
+                <span className="mobileSwipeHint" aria-hidden="true">Deslize →</span>
+                <span className="sectionNote">Metascore · disponíveis agora · ainda quero ver</span>
+              </div>
+            </div>
+            <div className="topGrid mobileShelf mobileShelfTop">
+              {topRated.map((movie) => <MovieCard movie={movie} compact key={movie.key} onSelect={setSelectedMovie} />)}
+            </div>
+          </section>
 
-        <div className="filters">
-          <label className="searchBox">
-            <span className="srOnly">Buscar filme</span>
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar título…" inputMode="search" />
-          </label>
+          <section className="section catalogSection">
+            <div className="sectionHeading">
+              <div>
+                <span className="eyebrow">ESTANTE</span>
+                <h2>Catálogo</h2>
+              </div>
+              <span className="sectionNote catalogCount">{filtered.length} títulos</span>
+            </div>
 
-          <div className="filterRow serviceFilter" role="group" aria-label="Filtrar por serviço">
-            {SERVICES.map((item) => (
-              <button key={item} onClick={() => setService(item)} className={service === item ? "active" : ""}>{item}</button>
-            ))}
-          </div>
+            <div className="filters">
+              <label className="searchBox">
+                <span className="srOnly">Buscar filme</span>
+                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar título…" inputMode="search" />
+              </label>
 
-          <div className="selectRow">
-            <label>
-              <span>Gênero</span>
-              <select value={genre} onChange={(e) => setGenre(e.target.value)}>
-                {genres.map((item) => <option key={item}>{item}</option>)}
-              </select>
-            </label>
-            <label>
-              <span>Idioma original</span>
-              <select value={language} onChange={(e) => setLanguage(e.target.value)}>
-                <option value="Todos">Todos</option>
-                {languages.map((item) => (
-                  <option key={item.code} value={item.code}>{item.label} ({item.count})</option>
+              <div className="filterRow serviceFilter" role="group" aria-label="Filtrar por serviço">
+                {SERVICES.map((item) => (
+                  <button key={item} onClick={() => setService(item)} className={service === item ? "active" : ""}>{item}</button>
                 ))}
-              </select>
-            </label>
-            <label>
-              <span>Estado</span>
-              <select value={stateFilter} onChange={(e) => setStateFilter(e.target.value as StateFilter)}>
-                <option value="watch">Quero ver ({stateCounts.watch})</option>
-                <option value="seen">Vistos ({stateCounts.seen})</option>
-                <option value="dismissed">Não quero ver ({stateCounts.dismissed})</option>
-                <option value="all">Todos ({movies.length})</option>
-              </select>
-            </label>
-            <label>
-              <span>Ordenar</span>
-              <select
-                value={sort}
-                onChange={(e) => {
-                  setSort(e.target.value as SortMode);
-                  setShuffleSeed(null);
-                }}
-              >
-                <option value="meta">Metascore</option>
-                <option value="users">Nota dos usuários</option>
-                <option value="year">Mais recentes</option>
-                <option value="title">Título</option>
-              </select>
-            </label>
-            <label className="toggleLabel">
-              <input type="checkbox" checked={onlyAvailable} onChange={(e) => setOnlyAvailable(e.target.checked)} />
-              <span>Só disponíveis nos 4 serviços</span>
-            </label>
-          </div>
+              </div>
 
-          <button type="button" className="textButton" onClick={shuffleCatalog} aria-pressed={shuffleSeed !== null}>
-            {shuffleSeed === null ? "↻ Embaralhar catálogo" : "↻ Embaralhar de novo"}
-          </button>
-        </div>
+              <div className="selectRow">
+                <label>
+                  <span>Gênero</span>
+                  <select value={genre} onChange={(e) => setGenre(e.target.value)}>
+                    {genres.map((item) => <option key={item}>{item}</option>)}
+                  </select>
+                </label>
+                <label>
+                  <span>Idioma original</span>
+                  <select value={language} onChange={(e) => setLanguage(e.target.value)}>
+                    <option value="Todos">Todos</option>
+                    {languages.map((item) => (
+                      <option key={item.code} value={item.code}>{item.label} ({item.count})</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span>Estado</span>
+                  <select value={stateFilter} onChange={(e) => setStateFilter(e.target.value as StateFilter)}>
+                    <option value="watch">Quero ver ({stateCounts.watch})</option>
+                    <option value="seen">Vistos ({stateCounts.seen})</option>
+                    <option value="dismissed">Não quero ver ({stateCounts.dismissed})</option>
+                    <option value="all">Todos ({movies.length})</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Ordenar</span>
+                  <select
+                    value={sort}
+                    onChange={(e) => {
+                      setSort(e.target.value as SortMode);
+                      setShuffleSeed(null);
+                    }}
+                  >
+                    <option value="meta">Metascore</option>
+                    <option value="users">Nota dos usuários</option>
+                    <option value="year">Mais recentes</option>
+                    <option value="title">Título</option>
+                  </select>
+                </label>
+                <label className="toggleLabel">
+                  <input type="checkbox" checked={onlyAvailable} onChange={(e) => setOnlyAvailable(e.target.checked)} />
+                  <span>Só disponíveis nos 4 serviços</span>
+                </label>
+              </div>
 
-        <div className="catalogGrid">
-          {filtered.map((movie) => <MovieCard movie={movie} key={movie.key} onSelect={setSelectedMovie} />)}
-        </div>
+              <button type="button" className="textButton" onClick={shuffleCatalog} aria-pressed={shuffleSeed !== null}>
+                {shuffleSeed === null ? "↻ Embaralhar catálogo" : "↻ Embaralhar de novo"}
+              </button>
+            </div>
 
-        {filtered.length === 0 && <div className="emptyState">Nenhum filme corresponde a esses filtros.</div>}
-      </section>
+            <div className="catalogGrid">
+              {filtered.map((movie) => <MovieCard movie={movie} key={movie.key} onSelect={setSelectedMovie} />)}
+            </div>
 
-      <MovieDetailModal
-        movie={selectedMovie}
-        onClose={() => setSelectedMovie(null)}
-        personalState={selectedMovie ? personalStateFor(selectedMovie) : "watch"}
-        onSetPersonalState={(state) => selectedMovie && setMovieState(selectedMovie, state)}
-      />
+            {filtered.length === 0 && <div className="emptyState">Nenhum filme corresponde a esses filtros.</div>}
+          </section>
+
+          <MovieDetailModal
+            movie={selectedMovie}
+            onClose={() => setSelectedMovie(null)}
+            personalState={selectedMovie ? personalStateFor(selectedMovie) : "watch"}
+            onSetPersonalState={(state) => selectedMovie && setMovieState(selectedMovie, state)}
+          />
+        </>
+      )}
     </>
   );
 }

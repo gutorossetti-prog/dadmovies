@@ -1,0 +1,110 @@
+.catalogModeSwitch {
+  position: sticky;
+  top: 14px;
+  z-index: 30;
+  width: fit-content;
+  display: flex;
+  gap: 4px;
+  margin: 18px auto -58px;
+  padding: 4px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 999px;
+  background: rgba(11,13,16,.82);
+  box-shadow: 0 12px 36px rgba(0,0,0,.28);
+  backdrop-filter: blur(16px);
+}
+
+.catalogModeSwitch button {
+  min-width: 104px;
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 17px;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 750;
+  transition: background .18s ease, color .18s ease, transform .18s ease;
+}
+
+.catalogModeSwitch button:hover { color: var(--text); }
+.catalogModeSwitch button.active {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.seriesPlaceholder {
+  min-height: calc(100svh - 80px);
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(320px, .75fr);
+  align-items: center;
+  gap: 42px;
+  padding: 96px 0 58px;
+}
+
+.seriesPlaceholderImage {
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 28px;
+  background: var(--surface);
+  box-shadow: 0 34px 90px rgba(0,0,0,.35);
+}
+
+.seriesPlaceholderImage img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.seriesPlaceholderCopy h1 {
+  margin: 10px 0 16px;
+  font-size: clamp(3.2rem, 6vw, 6.8rem);
+  line-height: .9;
+  letter-spacing: -.06em;
+}
+
+.seriesPlaceholderCopy p {
+  max-width: 520px;
+  margin: 0 0 26px;
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+@media (max-width: 980px) {
+  .catalogModeSwitch { margin-bottom: -42px; }
+  .seriesPlaceholder {
+    min-height: auto;
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding-top: 100px;
+  }
+  .seriesPlaceholderCopy { max-width: 720px; }
+}
+
+@media (max-width: 640px) {
+  .catalogModeSwitch {
+    top: max(8px, env(safe-area-inset-top));
+    width: calc(100% - 10px);
+    margin: 10px 5px -34px;
+  }
+  .catalogModeSwitch button {
+    min-width: 0;
+    flex: 1;
+    min-height: 44px;
+    padding: 10px 14px;
+  }
+  .seriesPlaceholder {
+    gap: 22px;
+    padding: 82px 0 24px;
+  }
+  .seriesPlaceholderImage { border-radius: 18px; }
+  .seriesPlaceholderCopy h1 {
+    font-size: clamp(3rem, 16vw, 4.9rem);
+  }
+  .seriesPlaceholderCopy p { font-size: .97rem; }
+  .seriesPlaceholderCopy .textButton {
+    width: 100%;
+    min-height: 46px;
+  }
+}
