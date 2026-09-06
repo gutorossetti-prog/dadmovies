@@ -174,6 +174,7 @@ async function main() {
       userScore: numberOrNull(r[idx["User Score"]]),
       posterUrl: match?.poster_path ? `https://image.tmdb.org/t/p/w500${match.poster_path}` : null,
       genres: genreIds.map((id) => genreMap.get(id)).filter(Boolean),
+      originalLanguage: match?.original_language ?? null,
       tmdbId: match?.id ?? null,
       tmdbType: match?.media_type ?? null,
     });
