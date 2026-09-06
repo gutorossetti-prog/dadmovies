@@ -20,13 +20,6 @@ function shuffle<T>(input: T[]): T[] {
   return a;
 }
 
-function stateLabel(state: StateFilter) {
-  if (state === "seen") return "Vistos";
-  if (state === "dismissed") return "Não quero ver";
-  if (state === "all") return "Todos";
-  return "Quero ver";
-}
-
 export function CatalogClient({ movies }: { movies: Movie[] }) {
   const [service, setService] = useState<(typeof SERVICES)[number]>("Todos");
   const [genre, setGenre] = useState("Todos");
@@ -156,9 +149,12 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
               <span className="eyebrow">PARA HOJE</span>
               <h2>Três escolhas</h2>
             </div>
-            <button className="textButton" onClick={drawThree}>Sortear de novo</button>
+            <div className="sectionHeadingActions">
+              <span className="mobileSwipeHint" aria-hidden="true">Deslize →</span>
+              <button className="textButton" onClick={drawThree}>Sortear de novo</button>
+            </div>
           </div>
-          <div className="featuredGrid">
+          <div className="featuredGrid mobileShelf mobileShelfFeatured">
             {randomMovies.map((movie) => <MovieCard movie={movie} key={movie.key} onSelect={setSelectedMovie} />)}
           </div>
         </section>
@@ -170,9 +166,12 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
             <span className="eyebrow">ATALHO</span>
             <h2>Melhores avaliados</h2>
           </div>
-          <span className="sectionNote">Metascore · disponíveis agora · ainda quero ver</span>
+          <div className="sectionHeadingActions">
+            <span className="mobileSwipeHint" aria-hidden="true">Deslize →</span>
+            <span className="sectionNote">Metascore · disponíveis agora · ainda quero ver</span>
+          </div>
         </div>
-        <div className="topGrid">
+        <div className="topGrid mobileShelf mobileShelfTop">
           {topRated.map((movie) => <MovieCard movie={movie} compact key={movie.key} onSelect={setSelectedMovie} />)}
         </div>
       </section>
@@ -183,13 +182,13 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
             <span className="eyebrow">ESTANTE</span>
             <h2>Catálogo</h2>
           </div>
-          <span className="sectionNote">{filtered.length} títulos</span>
+          <span className="sectionNote catalogCount">{filtered.length} títulos</span>
         </div>
 
         <div className="filters">
           <label className="searchBox">
             <span className="srOnly">Buscar filme</span>
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar título…" />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar título…" inputMode="search" />
           </label>
 
           <div className="filterRow serviceFilter" role="group" aria-label="Filtrar por serviço">
