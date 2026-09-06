@@ -1,0 +1,186 @@
+.genreShelvesSection {
+  padding-top: 58px;
+}
+
+.genreShelvesHeading {
+  align-items: end;
+}
+
+.genreShelfControls {
+  display: flex;
+  align-items: end;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.genreShelfControls label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: .72rem;
+}
+
+.genreShelfControls select {
+  min-width: 156px;
+}
+
+.genreShelfStack {
+  display: grid;
+  gap: 34px;
+}
+
+.genreShelfGroup {
+  min-width: 0;
+}
+
+.genreShelfHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.genreShelfHeader h3 {
+  margin: 0;
+  font-size: clamp(1.35rem, 2vw, 2rem);
+  letter-spacing: -.035em;
+}
+
+.genreShelfHeader span {
+  color: var(--muted);
+  font-size: .72rem;
+  white-space: nowrap;
+}
+
+.genreShelfTrack {
+  display: flex;
+  gap: 14px;
+  margin-inline: -2px;
+  padding: 2px 2px 12px;
+  overflow-x: auto;
+  overflow-y: visible;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  scrollbar-color: #323a45 transparent;
+  -webkit-overflow-scrolling: touch;
+}
+
+.genreShelfTrack::-webkit-scrollbar {
+  height: 7px;
+}
+
+.genreShelfTrack::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.genreShelfTrack::-webkit-scrollbar-thumb {
+  background: #323a45;
+  border-radius: 999px;
+}
+
+.genreShelfTrack .movieCard {
+  flex: 0 0 clamp(150px, 13vw, 195px);
+  scroll-snap-align: start;
+}
+
+.genreShelfTrack .posterWrap {
+  border-radius: 14px;
+}
+
+@media (max-width: 700px) {
+  .genreShelvesSection {
+    padding-top: 46px;
+  }
+
+  .genreShelvesHeading {
+    display: grid;
+    align-items: start;
+    gap: 14px;
+  }
+
+  .genreShelfControls {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .genreShelfControls label {
+    flex: 1 1 160px;
+  }
+
+  .genreShelfControls select {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .genreShelfControls .textButton {
+    min-height: 44px;
+  }
+
+  .genreShelfStack {
+    gap: 30px;
+  }
+
+  .genreShelfHeader {
+    margin-bottom: 10px;
+  }
+
+  .genreShelfHeader h3 {
+    font-size: 1.45rem;
+  }
+
+  .genreShelfHeader span {
+    font-size: .66rem;
+  }
+
+  .genreShelfTrack {
+    gap: 11px;
+    margin-inline: -14px;
+    padding: 2px 14px 10px;
+    scroll-padding-inline: 14px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .genreShelfTrack::-webkit-scrollbar {
+    display: none;
+  }
+
+  .genreShelfTrack .movieCard {
+    flex-basis: min(42vw, 176px);
+    scroll-snap-stop: normal;
+  }
+
+  .genreShelfTrack .titleRow h3 {
+    font-size: .88rem;
+  }
+
+  .genreShelfTrack .year {
+    font-size: .7rem;
+  }
+
+  .genreShelfTrack .services {
+    gap: 4px;
+  }
+
+  .genreShelfTrack .serviceBadge {
+    padding: 4px 6px;
+    font-size: .57rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .genreShelfTrack .movieCard {
+    flex-basis: 45vw;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .genreShelfTrack {
+    scroll-behavior: auto;
+  }
+}
