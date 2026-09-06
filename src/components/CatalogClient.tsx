@@ -142,7 +142,7 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
     <>
       <section className="hero">
         <div>
-          <span className="eyebrow">CATÁLOGO PESSOAL</span>
+          <span className="eyebrow">CATÁLOGO DO PAIZÃO</span>
           <h1>Escolha um bom filme.<br />Sem perder meia hora escolhendo.</h1>
           <p>Uma estante visual com o que vale a pena ver e onde está disponível.</p>
         </div>
