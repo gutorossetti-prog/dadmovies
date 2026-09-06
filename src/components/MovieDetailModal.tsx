@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import type { Movie, StreamingService } from "@/lib/types";
+import type { Movie, PersonalState, StreamingService } from "@/lib/types";
 
 type MovieDetails = {
   overview: string;
@@ -10,6 +10,7 @@ type MovieDetails = {
   runtime: number | null;
   cast: Array<{ name: string; character: string }>;
   crew: Array<{ name: string; role: string }>;
+  trailer: { site: "YouTube"; key: string; name: string } | null;
 };
 
 function serviceClass(service: StreamingService) {
@@ -19,9 +20,26 @@ function serviceClass(service: StreamingService) {
   return "service-disney";
 }
 
-export function MovieDetailModal({ movie, onClose }: { movie: Movie | null; onClose: () => void }) {
+function stateLabel(state: PersonalState) {
+  if (state === "seen") return "Visto";
+  if (state === "dismissed") return "Não quero ver";
+  return "Quero ver";
+}
+
+export function MovieDetailModal({
+  movie,
+  onClose,
+  personalState,
+  onSetPersonalState,
+}: {
+  movie: Movie | null;
+  onClose: () => void;
+  personalState: PersonalState;
+  onSetPersonalState: (state: PersonalState) => void;
+}) {
   const [details, setDetails] = useState<MovieDetails | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [showTrailer, setShowTrailer] = useState(false);
 
   useEffect(() => {
     if (!movie) return;
@@ -41,6 +59,8 @@ export function MovieDetailModal({ movie, onClose }: { movie: Movie | null; onCl
   }, [movie, onClose]);
 
   useEffect(() => {
+    setShowTrailer(false);
+
     if (!movie) {
       setDetails(null);
       setStatus("idle");
@@ -76,25 +96,67 @@ export function MovieDetailModal({ movie, onClose }: { movie: Movie | null; onCl
 
   if (!movie) return null;
 
+  const trailer = details?.trailer ?? null;
+
   return (
     <div className="modalBackdrop" onMouseDown={(event) => event.currentTarget === event.target && onClose()}>
       <section className="movieModal" role="dialog" aria-modal="true" aria-labelledby="movie-modal-title">
         <button className="modalClose" type="button" onClick={onClose} aria-label="Fechar detalhes">×</button>
 
         <div className="modalPosterColumn">
-          <div className="modalPosterWrap">
-            {movie.posterUrl ? (
-              <Image
-                src={movie.posterUrl}
-                alt={`Pôster de ${movie.title}`}
-                fill
-                sizes="(max-width: 700px) 70vw, 300px"
-                className="poster"
-              />
-            ) : (
-              <div className="posterFallback"><span>{movie.title}</span></div>
-            )}
-          </div>
+          {trailer ? (
+            <button
+              type="button"
+              className="modalPosterWrap"
+              onClick={() => setShowTrailer(true)}
+              aria-label={`Assistir trailer de ${movie.title}`}
+              style={{ width: "100%", padding: 0, cursor: "pointer", color: "inherit" }}
+            >
+              {movie.posterUrl ? (
+                <Image
+                  src={movie.posterUrl}
+                  alt={`Pôster de ${movie.title}`}
+                  fill
+                  sizes="(max-width: 700px) 70vw, 300px"
+                  className="poster"
+                />
+              ) : (
+                <div className="posterFallback"><span>{movie.title}</span></div>
+              )}
+              <span
+                style={{
+                  position: "absolute",
+                  left: "50%",
+                  bottom: 18,
+                  transform: "translateX(-50%)",
+                  padding: "10px 14px",
+                  borderRadius: 999,
+                  background: "rgba(5,7,10,.88)",
+                  border: "1px solid rgba(255,255,255,.16)",
+                  color: "#fff",
+                  fontSize: ".78rem",
+                  fontWeight: 800,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                ▶ Trailer
+              </span>
+            </button>
+          ) : (
+            <div className="modalPosterWrap">
+              {movie.posterUrl ? (
+                <Image
+                  src={movie.posterUrl}
+                  alt={`Pôster de ${movie.title}`}
+                  fill
+                  sizes="(max-width: 700px) 70vw, 300px"
+                  className="poster"
+                />
+              ) : (
+                <div className="posterFallback"><span>{movie.title}</span></div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="modalBody">
@@ -118,7 +180,39 @@ export function MovieDetailModal({ movie, onClose }: { movie: Movie | null; onCl
             <div><strong>{movie.userScore === null ? "—" : movie.userScore.toFixed(1)}</strong><span>User Score</span></div>
           </div>
 
-          {status === "loading" && <p className="modalLoading">Carregando sinopse e créditos…</p>}
+          <div className="modalSection">
+            <h3>Sua lista</h3>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+              <span className="serviceBadge muted">{stateLabel(personalState)}</span>
+              {personalState !== "seen" && (
+                <button className="textButton" type="button" onClick={() => onSetPersonalState("seen")}>✓ Marcar como visto</button>
+              )}
+              {personalState !== "dismissed" && (
+                <button className="textButton" type="button" onClick={() => onSetPersonalState("dismissed")}>✕ Não quero ver</button>
+              )}
+              {personalState !== "watch" && (
+                <button className="textButton" type="button" onClick={() => onSetPersonalState("watch")}>Voltar para quero ver</button>
+              )}
+            </div>
+          </div>
+
+          {showTrailer && trailer && (
+            <div className="modalSection">
+              <h3>Trailer</h3>
+              <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9", overflow: "hidden", borderRadius: 14, background: "#05070a" }}>
+                <iframe
+                  src={`https://www.youtube-nocookie.com/embed/${encodeURIComponent(trailer.key)}?autoplay=1&rel=0`}
+                  title={`${trailer.name} — ${movie.title}`}
+                  allow="autoplay; encrypted-media; picture-in-picture"
+                  allowFullScreen
+                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }}
+                />
+              </div>
+              <button className="textButton" type="button" onClick={() => setShowTrailer(false)} style={{ marginTop: 10 }}>Fechar trailer</button>
+            </div>
+          )}
+
+          {status === "loading" && <p className="modalLoading">Carregando sinopse, créditos e trailer…</p>}
 
           {status === "error" && (
             <p className="modalLoading">Sinopse e créditos ainda não estão disponíveis para este título.</p>

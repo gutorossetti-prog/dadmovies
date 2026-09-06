@@ -79,9 +79,9 @@ const TMDB_LANGUAGE_TAG = {
   pt: "pt-BR",
 };
 
+const TARGET_SERVICE_ORDER = ["Netflix", "HBO Max", "Disney+", "Prime Video"];
+
 function posterLanguagePriority(originalLanguage) {
-  // Preserve the original poster language for English, Spanish and Portuguese.
-  // For every other original language, prefer a Portuguese poster for DadMovies.
   const preferred = NATIVE_POSTER_LANGUAGES.has(originalLanguage) ? originalLanguage : "pt";
   const priority = [preferred, "pt", "en", null];
   return priority.filter((language, index) => priority.indexOf(language) === index);
@@ -103,9 +103,7 @@ async function selectPosterPath(match, token) {
   const priority = posterLanguagePriority(match.original_language);
   const preferred = priority.find(Boolean) || "pt";
   const language = TMDB_LANGUAGE_TAG[preferred] || "pt-BR";
-  const includeLanguages = priority
-    .map((value) => value ?? "null")
-    .join(",");
+  const includeLanguages = priority.map((value) => value ?? "null").join(",");
 
   try {
     const images = await tmdbFetch(
@@ -123,9 +121,42 @@ async function selectPosterPath(match, token) {
     console.warn(`TMDB poster lookup failed for ${match.media_type}/${match.id}:`, error.message);
   }
 
-  // The match itself was searched in en-US. This is a safe final fallback if the
-  // image endpoint has no poster in the requested language chain.
   return match.poster_path ?? null;
+}
+
+function mapTargetServices(providers) {
+  const found = new Set();
+
+  for (const provider of providers || []) {
+    const name = String(provider?.provider_name || "").trim().toLowerCase();
+    if (!name) continue;
+
+    if (name.includes("netflix")) found.add("Netflix");
+    if (name === "hbo max" || name === "max") found.add("HBO Max");
+    if (name === "disney+" || name.includes("disney plus")) found.add("Disney+");
+    if (name.includes("amazon prime video")) found.add("Prime Video");
+  }
+
+  return TARGET_SERVICE_ORDER.filter((service) => found.has(service));
+}
+
+async function getBrazilStreaming(match, token) {
+  if (!match?.id || !match?.media_type) {
+    return { services: [], availabilityStatus: "unconfirmed" };
+  }
+
+  try {
+    const providers = await tmdbFetch(`/${match.media_type}/${match.id}/watch/providers`, token);
+    const brazil = providers?.results?.BR;
+    const flatrate = brazil?.flatrate || [];
+    return {
+      services: mapTargetServices(flatrate),
+      availabilityStatus: "confirmed",
+    };
+  } catch (error) {
+    console.warn(`TMDB streaming lookup failed for ${match.media_type}/${match.id}:`, error.message);
+    return { services: [], availabilityStatus: "unconfirmed" };
+  }
 }
 
 async function loadOverrides() {
@@ -142,11 +173,6 @@ async function matchTmdb(title, year, token, overrides) {
   }
 
   const q = encodeURIComponent(title);
-
-  // The Sheet/Letterboxd titles are predominantly international English titles.
-  // Search in en-US so translated titles such as "Howl's Moving Castle" and
-  // "City of God" are present in the returned title fields used by our scorer.
-  // Display metadata (genres/details) remains localized separately in pt-BR.
   const multi = await tmdbFetch(`/search/multi?query=${q}&include_adult=false&language=en-US`, token);
   const candidates = (multi.results || [])
     .filter((x) => x.media_type === "movie" || x.media_type === "tv")
@@ -156,7 +182,6 @@ async function matchTmdb(title, year, token, overrides) {
 
   if (candidates[0]?._score >= 18) return candidates[0];
 
-  // Year-aware fallback for ambiguous or weak multi-search matches.
   const movieYear = year ? `&primary_release_year=${year}` : "";
   const tvYear = year ? `&first_air_date_year=${year}` : "";
   const [movie, tv] = await Promise.all([
@@ -190,7 +215,7 @@ async function main() {
   const rows = parseCsv(await csvRes.text());
   const headers = rows.shift();
   const idx = Object.fromEntries(headers.map((h, i) => [h, i]));
-  const required = ["Filme", "Ano", "Netflix", "HBO Max", "Disney+", "Prime Video", "Status", "Observação", "Letterboxd", "Metascore", "User Score"];
+  const required = ["Filme", "Ano", "Observação", "Letterboxd", "Metascore", "User Score"];
   for (const h of required) if (!(h in idx)) throw new Error(`Missing sheet column: ${h}`);
 
   const movieGenres = await tmdbFetch("/genre/movie/list?language=pt-BR", token);
@@ -206,11 +231,6 @@ async function main() {
     const title = r[idx["Filme"]]?.trim();
     if (!title) continue;
     const year = numberOrNull(r[idx["Ano"]]);
-    const services = [];
-    if (r[idx["Netflix"]] === "Sim") services.push("Netflix");
-    if (r[idx["HBO Max"]] === "Sim") services.push("HBO Max");
-    if (r[idx["Disney+"]] === "Sim") services.push("Disney+");
-    if (r[idx["Prime Video"]] === "Sim") services.push("Prime Video");
 
     let match = null;
     try { match = await matchTmdb(title, year, token, overrides); }
@@ -219,15 +239,16 @@ async function main() {
     if (!match) unmatched.push({ title, year });
     const genreIds = match?.genre_ids || match?.genres?.map((g) => g.id) || [];
 
-    let posterPath = null;
-    if (match) posterPath = await selectPosterPath(match, token);
+    const [posterPath, streaming] = match
+      ? await Promise.all([selectPosterPath(match, token), getBrazilStreaming(match, token)])
+      : [null, { services: [], availabilityStatus: "unconfirmed" }];
 
     catalog.push({
       key: `${title}|${year ?? ""}`,
       title,
       year,
-      services,
-      availabilityStatus: r[idx["Status"]] === "Confirmado" ? "confirmed" : "unconfirmed",
+      services: streaming.services,
+      availabilityStatus: streaming.availabilityStatus,
       note: r[idx["Observação"]] || "",
       letterboxdUrl: r[idx["Letterboxd"]] || "",
       metascore: numberOrNull(r[idx["Metascore"]]),

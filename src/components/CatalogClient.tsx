@@ -1,13 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MovieCard } from "@/components/MovieCard";
 import { MovieDetailModal } from "@/components/MovieDetailModal";
-import type { Movie, StreamingService } from "@/lib/types";
+import type { Movie, PersonalState, StreamingService } from "@/lib/types";
 
 const SERVICES: Array<"Todos" | StreamingService> = ["Todos", "Netflix", "HBO Max", "Disney+", "Prime Video"];
+const PERSONAL_STATE_STORAGE_KEY = "dadmovies.personal-state.v1";
 
 type SortMode = "meta" | "users" | "year" | "title";
+type StateFilter = PersonalState | "all";
 
 function shuffle<T>(input: T[]): T[] {
   const a = [...input];
@@ -18,6 +20,13 @@ function shuffle<T>(input: T[]): T[] {
   return a;
 }
 
+function stateLabel(state: StateFilter) {
+  if (state === "seen") return "Vistos";
+  if (state === "dismissed") return "Não quero ver";
+  if (state === "all") return "Todos";
+  return "Quero ver";
+}
+
 export function CatalogClient({ movies }: { movies: Movie[] }) {
   const [service, setService] = useState<(typeof SERVICES)[number]>("Todos");
   const [genre, setGenre] = useState("Todos");
@@ -25,8 +34,40 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortMode>("meta");
   const [onlyAvailable, setOnlyAvailable] = useState(true);
+  const [stateFilter, setStateFilter] = useState<StateFilter>("watch");
+  const [personalStates, setPersonalStates] = useState<Record<string, PersonalState>>({});
   const [randomKeys, setRandomKeys] = useState<string[]>([]);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(PERSONAL_STATE_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as Record<string, PersonalState>;
+      if (parsed && typeof parsed === "object") setPersonalStates(parsed);
+    } catch {
+      // Ignore malformed/blocked localStorage and keep every movie as "watch".
+    }
+  }, []);
+
+  function personalStateFor(movie: Movie): PersonalState {
+    return personalStates[movie.key] ?? "watch";
+  }
+
+  function setMovieState(movie: Movie, state: PersonalState) {
+    setPersonalStates((current) => {
+      const next = { ...current };
+      if (state === "watch") delete next[movie.key];
+      else next[movie.key] = state;
+
+      try {
+        window.localStorage.setItem(PERSONAL_STATE_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        // UI still works for the current session if storage is unavailable.
+      }
+      return next;
+    });
+  }
 
   const genres = useMemo(() => {
     const values = new Set<string>();
@@ -46,9 +87,15 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
       .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label, "pt-BR"));
   }, [movies]);
 
-  const filtered = useMemo(() => {
+  const stateCounts = useMemo(() => {
+    const counts = { watch: 0, seen: 0, dismissed: 0 };
+    for (const movie of movies) counts[personalStates[movie.key] ?? "watch"] += 1;
+    return counts;
+  }, [movies, personalStates]);
+
+  const baseFiltered = useMemo(() => {
     const q = query.trim().toLocaleLowerCase("pt-BR");
-    const rows = movies.filter((movie) => {
+    return movies.filter((movie) => {
       if (onlyAvailable && movie.services.length === 0) return false;
       if (service !== "Todos" && !movie.services.includes(service)) return false;
       if (genre !== "Todos" && !movie.genres.includes(genre)) return false;
@@ -56,6 +103,12 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
       if (q && !movie.title.toLocaleLowerCase("pt-BR").includes(q)) return false;
       return true;
     });
+  }, [movies, service, genre, language, query, onlyAvailable]);
+
+  const filtered = useMemo(() => {
+    const rows = baseFiltered
+      .filter((movie) => stateFilter === "all" || (personalStates[movie.key] ?? "watch") === stateFilter)
+      .slice();
 
     return rows.sort((a, b) => {
       if (sort === "users") return (b.userScore ?? -1) - (a.userScore ?? -1);
@@ -63,14 +116,14 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
       if (sort === "title") return a.title.localeCompare(b.title, "pt-BR");
       return (b.metascore ?? -1) - (a.metascore ?? -1);
     });
-  }, [movies, service, genre, language, query, sort, onlyAvailable]);
+  }, [baseFiltered, personalStates, stateFilter, sort]);
 
   const topRated = useMemo(() => {
     return movies
-      .filter((movie) => movie.services.length > 0 && movie.metascore !== null)
+      .filter((movie) => (personalStates[movie.key] ?? "watch") === "watch" && movie.services.length > 0 && movie.metascore !== null)
       .sort((a, b) => (b.metascore ?? -1) - (a.metascore ?? -1))
       .slice(0, 10);
-  }, [movies]);
+  }, [movies, personalStates]);
 
   const randomMovies = useMemo(() => {
     const byKey = new Map(movies.map((m) => [m.key, m]));
@@ -78,7 +131,9 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
   }, [movies, randomKeys]);
 
   function drawThree() {
-    const candidates = filtered.filter((movie) => movie.services.length > 0 && movie.availabilityStatus === "confirmed");
+    const candidates = baseFiltered.filter(
+      (movie) => (personalStates[movie.key] ?? "watch") === "watch" && movie.services.length > 0 && movie.availabilityStatus === "confirmed",
+    );
     setRandomKeys(shuffle(candidates).slice(0, 3).map((movie) => movie.key));
     window.setTimeout(() => document.getElementById("sorteio")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
   }
@@ -115,7 +170,7 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
             <span className="eyebrow">ATALHO</span>
             <h2>Melhores avaliados</h2>
           </div>
-          <span className="sectionNote">Metascore · disponíveis agora</span>
+          <span className="sectionNote">Metascore · disponíveis agora · ainda quero ver</span>
         </div>
         <div className="topGrid">
           {topRated.map((movie) => <MovieCard movie={movie} compact key={movie.key} onSelect={setSelectedMovie} />)}
@@ -160,6 +215,15 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
               </select>
             </label>
             <label>
+              <span>Estado</span>
+              <select value={stateFilter} onChange={(e) => setStateFilter(e.target.value as StateFilter)}>
+                <option value="watch">Quero ver ({stateCounts.watch})</option>
+                <option value="seen">Vistos ({stateCounts.seen})</option>
+                <option value="dismissed">Não quero ver ({stateCounts.dismissed})</option>
+                <option value="all">Todos ({movies.length})</option>
+              </select>
+            </label>
+            <label>
               <span>Ordenar</span>
               <select value={sort} onChange={(e) => setSort(e.target.value as SortMode)}>
                 <option value="meta">Metascore</option>
@@ -182,7 +246,12 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
         {filtered.length === 0 && <div className="emptyState">Nenhum filme corresponde a esses filtros.</div>}
       </section>
 
-      <MovieDetailModal movie={selectedMovie} onClose={() => setSelectedMovie(null)} />
+      <MovieDetailModal
+        movie={selectedMovie}
+        onClose={() => setSelectedMovie(null)}
+        personalState={selectedMovie ? personalStateFor(selectedMovie) : "watch"}
+        onSetPersonalState={(state) => selectedMovie && setMovieState(selectedMovie, state)}
+      />
     </>
   );
 }
