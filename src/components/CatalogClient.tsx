@@ -233,7 +233,7 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
       {catalogMode === "series" ? (
         <section className="seriesPlaceholder" aria-labelledby="series-placeholder-title">
           <div className="seriesPlaceholderImage">
-            <img src="/series-banana-plantation.webp" alt="Fileiras de um bananal em plantio, carregadas de bananas" />
+            <img src="/series-banana-plantation.svg" alt="Fileiras de um bananal em plantio, carregadas de bananas" />
           </div>
           <div className="seriesPlaceholderCopy">
             <span className="eyebrow">SÉRIES · EM BREVE</span>
