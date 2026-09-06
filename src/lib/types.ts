@@ -12,6 +12,7 @@ export type Movie = {
   userScore: number | null;
   posterUrl: string | null;
   genres: string[];
+  originalLanguage?: string | null;
   tmdbId: number | null;
   tmdbType: "movie" | "tv" | null;
 };
