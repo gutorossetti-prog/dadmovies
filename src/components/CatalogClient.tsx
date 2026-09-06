@@ -21,6 +21,7 @@ function shuffle<T>(input: T[]): T[] {
 export function CatalogClient({ movies }: { movies: Movie[] }) {
   const [service, setService] = useState<(typeof SERVICES)[number]>("Todos");
   const [genre, setGenre] = useState("Todos");
+  const [language, setLanguage] = useState("Todos");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortMode>("meta");
   const [onlyAvailable, setOnlyAvailable] = useState(true);
@@ -33,12 +34,25 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
     return ["Todos", ...Array.from(values).sort((a, b) => a.localeCompare(b, "pt-BR"))];
   }, [movies]);
 
+  const languages = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const movie of movies) {
+      if (!movie.originalLanguage) continue;
+      counts.set(movie.originalLanguage, (counts.get(movie.originalLanguage) ?? 0) + 1);
+    }
+    const names = new Intl.DisplayNames(["pt-BR"], { type: "language" });
+    return Array.from(counts.entries())
+      .map(([code, count]) => ({ code, count, label: names.of(code) ?? code.toUpperCase() }))
+      .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label, "pt-BR"));
+  }, [movies]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLocaleLowerCase("pt-BR");
     const rows = movies.filter((movie) => {
       if (onlyAvailable && movie.services.length === 0) return false;
       if (service !== "Todos" && !movie.services.includes(service)) return false;
       if (genre !== "Todos" && !movie.genres.includes(genre)) return false;
+      if (language !== "Todos" && movie.originalLanguage !== language) return false;
       if (q && !movie.title.toLocaleLowerCase("pt-BR").includes(q)) return false;
       return true;
     });
@@ -49,7 +63,7 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
       if (sort === "title") return a.title.localeCompare(b.title, "pt-BR");
       return (b.metascore ?? -1) - (a.metascore ?? -1);
     });
-  }, [movies, service, genre, query, sort, onlyAvailable]);
+  }, [movies, service, genre, language, query, sort, onlyAvailable]);
 
   const topRated = useMemo(() => {
     return movies
@@ -134,6 +148,15 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
               <span>Gênero</span>
               <select value={genre} onChange={(e) => setGenre(e.target.value)}>
                 {genres.map((item) => <option key={item}>{item}</option>)}
+              </select>
+            </label>
+            <label>
+              <span>Idioma original</span>
+              <select value={language} onChange={(e) => setLanguage(e.target.value)}>
+                <option value="Todos">Todos</option>
+                {languages.map((item) => (
+                  <option key={item.code} value={item.code}>{item.label} ({item.count})</option>
+                ))}
               </select>
             </label>
             <label>
