@@ -13,6 +13,9 @@ type MovieDetails = {
   trailer: { site: "YouTube"; key: string; name: string } | null;
 };
 
+const PERSONAL_STATE_PIN_HASH_KEY = "dadmovies.personal-state.pin-hash.v1";
+const PERSONAL_STATE_PIN_SESSION_KEY = "dadmovies.personal-state.pin-session.v1";
+
 function serviceClass(service: StreamingService) {
   if (service === "Netflix") return "service-netflix";
   if (service === "Prime Video") return "service-prime";
@@ -32,6 +35,12 @@ function stateLabel(state: PersonalState) {
   if (state === "seen") return "Visto";
   if (state === "dismissed") return "Não quero ver";
   return "Quero ver";
+}
+
+async function sha256(value: string) {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 export function MovieDetailModal({
@@ -101,6 +110,40 @@ export function MovieDetailModal({
 
     return () => controller.abort();
   }, [movie]);
+
+  async function requestPersonalStateChange(nextState: PersonalState) {
+    if (window.sessionStorage.getItem(PERSONAL_STATE_PIN_SESSION_KEY) === "1") {
+      onSetPersonalState(nextState);
+      return;
+    }
+
+    const storedHash = window.localStorage.getItem(PERSONAL_STATE_PIN_HASH_KEY);
+
+    if (!storedHash) {
+      const created = window.prompt("Crie um PIN de 4 a 6 dígitos para proteger alterações na lista:");
+      if (created === null) return;
+      if (!/^\d{4,6}$/.test(created)) {
+        window.alert("O PIN precisa ter de 4 a 6 dígitos.");
+        return;
+      }
+      const confirmation = window.prompt("Digite o mesmo PIN novamente para confirmar:");
+      if (confirmation !== created) {
+        window.alert("Os PINs não conferem.");
+        return;
+      }
+      window.localStorage.setItem(PERSONAL_STATE_PIN_HASH_KEY, await sha256(created));
+    } else {
+      const entered = window.prompt("Digite o PIN para alterar o estado deste título:");
+      if (entered === null) return;
+      if ((await sha256(entered)) !== storedHash) {
+        window.alert("PIN incorreto.");
+        return;
+      }
+    }
+
+    window.sessionStorage.setItem(PERSONAL_STATE_PIN_SESSION_KEY, "1");
+    onSetPersonalState(nextState);
+  }
 
   if (!movie) return null;
 
@@ -204,15 +247,16 @@ export function MovieDetailModal({
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
               <span className="serviceBadge muted">{stateLabel(personalState)}</span>
               {personalState !== "seen" && (
-                <button className="textButton" type="button" onClick={() => onSetPersonalState("seen")}>✓ Marcar como visto</button>
+                <button className="textButton" type="button" onClick={() => void requestPersonalStateChange("seen")}>✓ Marcar como visto</button>
               )}
               {personalState !== "dismissed" && (
-                <button className="textButton" type="button" onClick={() => onSetPersonalState("dismissed")}>✕ Não quero ver</button>
+                <button className="textButton" type="button" onClick={() => void requestPersonalStateChange("dismissed")}>✕ Não quero ver</button>
               )}
               {personalState !== "watch" && (
-                <button className="textButton" type="button" onClick={() => onSetPersonalState("watch")}>Voltar para quero ver</button>
+                <button className="textButton" type="button" onClick={() => void requestPersonalStateChange("watch")}>Voltar para quero ver</button>
               )}
             </div>
+            <p style={{ marginTop: 8, opacity: .62, fontSize: ".78rem" }}>Alterações da lista são protegidas por PIN; navegar e assistir não exige PIN.</p>
           </div>
 
           {showTrailer && trailer && (
