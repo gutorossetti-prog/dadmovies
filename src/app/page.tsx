@@ -8,8 +8,8 @@ export default async function Home() {
     <main>
       <CatalogClient movies={movies} />
       <footer>
-        <p>Dados de disponibilidade e notas: catálogo pessoal em Google Sheets.</p>
-        <p>Posters e gêneros: TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
+        <p>Disponibilidade de streaming no Brasil: JustWatch, via TMDB. Notas: catálogo pessoal em Google Sheets.</p>
+        <p>Posters, gêneros, sinopses, créditos e trailers: TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
       </footer>
     </main>
   );

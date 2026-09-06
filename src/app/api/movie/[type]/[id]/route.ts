@@ -17,14 +17,40 @@ type TmdbPerson = {
   job?: string;
 };
 
+type TmdbVideo = {
+  key?: string;
+  site?: string;
+  type?: string;
+  official?: boolean;
+  name?: string;
+};
+
 async function tmdbFetch(type: "movie" | "tv", id: string, language: string, token: string) {
   return fetch(
-    `https://api.themoviedb.org/3/${type}/${id}?language=${language}&append_to_response=credits`,
+    `https://api.themoviedb.org/3/${type}/${id}?language=${language}&append_to_response=credits,videos`,
     {
       headers: { Authorization: `Bearer ${token}`, accept: "application/json" },
       next: { revalidate: 60 * 60 * 24 * 7 },
     },
   );
+}
+
+function chooseTrailer(videos: TmdbVideo[]) {
+  const candidates = videos
+    .filter((video) => video.site === "YouTube" && video.key && (video.type === "Trailer" || video.type === "Teaser"))
+    .map((video) => ({
+      ...video,
+      score: (video.type === "Trailer" ? 4 : 0) + (video.official ? 2 : 0),
+    }))
+    .sort((a, b) => b.score - a.score);
+
+  const selected = candidates[0];
+  if (!selected?.key) return null;
+  return {
+    site: "YouTube" as const,
+    key: selected.key,
+    name: selected.name || (selected.type === "Trailer" ? "Trailer" : "Teaser"),
+  };
 }
 
 export async function GET(
@@ -50,12 +76,14 @@ export async function GET(
 
   const data = await response.json();
   let overview = String(data.overview || "").trim();
+  let trailer = chooseTrailer(data.videos?.results || []);
 
-  if (!overview) {
+  if (!overview || !trailer) {
     const fallback = await tmdbFetch(type, id, "en-US", token);
     if (fallback.ok) {
       const fallbackData = await fallback.json();
-      overview = String(fallbackData.overview || "").trim();
+      if (!overview) overview = String(fallbackData.overview || "").trim();
+      if (!trailer) trailer = chooseTrailer(fallbackData.videos?.results || []);
     }
   }
 
@@ -101,5 +129,6 @@ export async function GET(
     runtime: data.runtime || data.episode_run_time?.[0] || null,
     cast,
     crew,
+    trailer,
   });
 }

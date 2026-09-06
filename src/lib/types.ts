@@ -1,5 +1,7 @@
 export type StreamingService = "Netflix" | "HBO Max" | "Disney+" | "Prime Video";
 
+export type PersonalState = "watch" | "seen" | "dismissed";
+
 export type Movie = {
   key: string;
   title: string;
