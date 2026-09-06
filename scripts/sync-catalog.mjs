@@ -72,6 +72,62 @@ async function tmdbFetch(endpoint, token) {
   return res.json();
 }
 
+const NATIVE_POSTER_LANGUAGES = new Set(["en", "es", "pt"]);
+const TMDB_LANGUAGE_TAG = {
+  en: "en-US",
+  es: "es-ES",
+  pt: "pt-BR",
+};
+
+function posterLanguagePriority(originalLanguage) {
+  // Preserve the original poster language for English, Spanish and Portuguese.
+  // For every other original language, prefer a Portuguese poster for DadMovies.
+  const preferred = NATIVE_POSTER_LANGUAGES.has(originalLanguage) ? originalLanguage : "pt";
+  const priority = [preferred, "pt", "en", null];
+  return priority.filter((language, index) => priority.indexOf(language) === index);
+}
+
+function bestPoster(posters) {
+  return [...posters].sort((a, b) => {
+    const voteDiff = Number(b.vote_average || 0) - Number(a.vote_average || 0);
+    if (voteDiff !== 0) return voteDiff;
+    const countDiff = Number(b.vote_count || 0) - Number(a.vote_count || 0);
+    if (countDiff !== 0) return countDiff;
+    return Number(b.width || 0) - Number(a.width || 0);
+  })[0] ?? null;
+}
+
+async function selectPosterPath(match, token) {
+  if (!match?.id || !match?.media_type) return null;
+
+  const priority = posterLanguagePriority(match.original_language);
+  const preferred = priority.find(Boolean) || "pt";
+  const language = TMDB_LANGUAGE_TAG[preferred] || "pt-BR";
+  const includeLanguages = priority
+    .map((value) => value ?? "null")
+    .join(",");
+
+  try {
+    const images = await tmdbFetch(
+      `/${match.media_type}/${match.id}/images?language=${language}&include_image_language=${encodeURIComponent(includeLanguages)}`,
+      token,
+    );
+    const posters = images.posters || [];
+
+    for (const wantedLanguage of priority) {
+      const candidates = posters.filter((poster) => (poster.iso_639_1 ?? null) === wantedLanguage);
+      const selected = bestPoster(candidates);
+      if (selected?.file_path) return selected.file_path;
+    }
+  } catch (error) {
+    console.warn(`TMDB poster lookup failed for ${match.media_type}/${match.id}:`, error.message);
+  }
+
+  // The match itself was searched in en-US. This is a safe final fallback if the
+  // image endpoint has no poster in the requested language chain.
+  return match.poster_path ?? null;
+}
+
 async function loadOverrides() {
   try { return JSON.parse(await fs.readFile(OVERRIDES, "utf8")); }
   catch { return {}; }
@@ -163,6 +219,9 @@ async function main() {
     if (!match) unmatched.push({ title, year });
     const genreIds = match?.genre_ids || match?.genres?.map((g) => g.id) || [];
 
+    let posterPath = null;
+    if (match) posterPath = await selectPosterPath(match, token);
+
     catalog.push({
       key: `${title}|${year ?? ""}`,
       title,
@@ -173,7 +232,7 @@ async function main() {
       letterboxdUrl: r[idx["Letterboxd"]] || "",
       metascore: numberOrNull(r[idx["Metascore"]]),
       userScore: numberOrNull(r[idx["User Score"]]),
-      posterUrl: match?.poster_path ? `https://image.tmdb.org/t/p/w500${match.poster_path}` : null,
+      posterUrl: posterPath ? `https://image.tmdb.org/t/p/w500${posterPath}` : null,
       genres: genreIds.map((id) => genreMap.get(id)).filter(Boolean),
       originalLanguage: match?.original_language ?? null,
       tmdbId: match?.id ?? null,
