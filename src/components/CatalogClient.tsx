@@ -23,6 +23,12 @@ type ShelfSortMode = "meta" | "year" | "random";
 type StateFilter = PersonalState | "all";
 type CatalogMode = "movies" | "series";
 
+type PersonalStateApiResponse = {
+  configured: boolean;
+  hasPin: boolean;
+  states: Record<string, PersonalState>;
+};
+
 function shuffle<T>(input: T[]): T[] {
   const a = [...input];
   for (let i = a.length - 1; i > 0; i--) {
@@ -44,6 +50,14 @@ function randomRank(key: string, seed: number): number {
   return hash >>> 0;
 }
 
+function persistLocalStates(states: Record<string, PersonalState>) {
+  try {
+    window.localStorage.setItem(PERSONAL_STATE_STORAGE_KEY, JSON.stringify(states));
+  } catch {
+    // The in-memory UI still works if storage is unavailable.
+  }
+}
+
 export function CatalogClient({ movies }: { movies: Movie[] }) {
   const [catalogMode, setCatalogMode] = useState<CatalogMode>("movies");
   const [service, setService] = useState<(typeof SERVICES)[number]>("Todos");
@@ -57,37 +71,116 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
   const [onlyAvailable, setOnlyAvailable] = useState(true);
   const [stateFilter, setStateFilter] = useState<StateFilter>("watch");
   const [personalStates, setPersonalStates] = useState<Record<string, PersonalState>>({});
+  const [remoteConfigured, setRemoteConfigured] = useState(false);
+  const [remoteHasPin, setRemoteHasPin] = useState(false);
+  const [statePin, setStatePin] = useState<string | null>(null);
   const [randomKeys, setRandomKeys] = useState<string[]>([]);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
 
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(PERSONAL_STATE_STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as Record<string, PersonalState>;
-      if (parsed && typeof parsed === "object") setPersonalStates(parsed);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Record<string, PersonalState>;
+        if (parsed && typeof parsed === "object") setPersonalStates(parsed);
+      }
     } catch {
-      // Ignore malformed/blocked localStorage and keep every movie as "watch".
+      // Ignore malformed/blocked localStorage and continue with remote state.
     }
+
+    const controller = new AbortController();
+    fetch("/api/personal-state", { cache: "no-store", signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`Personal-state request failed: ${response.status}`);
+        return response.json() as Promise<PersonalStateApiResponse>;
+      })
+      .then((data) => {
+        if (!data.configured) return;
+        const remoteStates = data.states && typeof data.states === "object" ? data.states : {};
+        setRemoteConfigured(true);
+        setRemoteHasPin(Boolean(data.hasPin));
+        setPersonalStates(remoteStates);
+        persistLocalStates(remoteStates);
+      })
+      .catch((error) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        console.warn("Personal-state sync unavailable; using local cache.", error);
+      });
+
+    return () => controller.abort();
   }, []);
 
   function personalStateFor(movie: Movie): PersonalState {
     return personalStates[movie.key] ?? "watch";
   }
 
-  function setMovieState(movie: Movie, state: PersonalState) {
+  function applyMovieState(movie: Movie, state: PersonalState) {
     setPersonalStates((current) => {
       const next = { ...current };
       if (state === "watch") delete next[movie.key];
       else next[movie.key] = state;
-
-      try {
-        window.localStorage.setItem(PERSONAL_STATE_STORAGE_KEY, JSON.stringify(next));
-      } catch {
-        // UI still works for the current session if storage is unavailable.
-      }
+      persistLocalStates(next);
       return next;
     });
+  }
+
+  async function setMovieState(movie: Movie, state: PersonalState) {
+    if (!remoteConfigured) {
+      window.alert("A sincronização da lista está indisponível agora. Tente novamente em instantes.");
+      return;
+    }
+
+    let pin = statePin;
+    if (!pin) {
+      if (remoteHasPin) {
+        const entered = window.prompt("Digite o PIN para alterar o estado deste título:");
+        if (entered === null) return;
+        if (!/^\d{4,6}$/.test(entered)) {
+          window.alert("O PIN precisa ter de 4 a 6 dígitos.");
+          return;
+        }
+        pin = entered;
+      } else {
+        const created = window.prompt("Crie um PIN de 4 a 6 dígitos para proteger alterações na lista:");
+        if (created === null) return;
+        if (!/^\d{4,6}$/.test(created)) {
+          window.alert("O PIN precisa ter de 4 a 6 dígitos.");
+          return;
+        }
+        const confirmation = window.prompt("Digite o mesmo PIN novamente para confirmar:");
+        if (confirmation !== created) {
+          window.alert("Os PINs não conferem.");
+          return;
+        }
+        pin = created;
+      }
+    }
+
+    try {
+      const response = await fetch("/api/personal-state", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ movieKey: movie.key, state, pin }),
+      });
+      const payload = (await response.json()) as { ok?: boolean; error?: string };
+
+      if (response.status === 401 || payload.error === "invalid-pin") {
+        setStatePin(null);
+        setRemoteHasPin(true);
+        window.alert("PIN incorreto.");
+        return;
+      }
+      if (!response.ok || !payload.ok) {
+        window.alert("Não foi possível salvar a alteração no momento.");
+        return;
+      }
+
+      setStatePin(pin);
+      setRemoteHasPin(true);
+      applyMovieState(movie, state);
+    } catch {
+      window.alert("Não foi possível salvar a alteração no momento.");
+    }
   }
 
   const genres = useMemo(() => {
@@ -417,7 +510,7 @@ export function CatalogClient({ movies }: { movies: Movie[] }) {
             movie={selectedMovie}
             onClose={() => setSelectedMovie(null)}
             personalState={selectedMovie ? personalStateFor(selectedMovie) : "watch"}
-            onSetPersonalState={(state) => selectedMovie && setMovieState(selectedMovie, state)}
+            onSetPersonalState={(state) => selectedMovie ? setMovieState(selectedMovie, state) : Promise.resolve()}
           />
         </>
       )}
